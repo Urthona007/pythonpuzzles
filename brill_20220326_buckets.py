@@ -13,6 +13,7 @@ This program takes a range of values in liters for initializing beaker b2, and d
 
 The original Brilliant problem used s1 = 18, s2 = 15, goal = 12, and tested init values 8, 9, 10,
 and 11.'''
+import argparse
 
 print(__doc__)
 
@@ -168,73 +169,79 @@ class Node:
             if self.gamestate.beaker[0] == g_state.beaker[0] and \
                 self.gamestate.beaker[1] == g_state.beaker[1]:
                 return False
-            elif self.parentnode is not None:
+            if self.parentnode is not None and isinstance(self.parentnode, Node):
                 return self.parentnode._no_match_prev(g_state)
             return True
         else:
             print("shouldnt be here")
+            assert True
+            return False
 
     def is_unique(self):
         """ See if a new node.gamestate matches one its ancestors."""
-        if self.parentnode == None:
+        if self.parentnode is None:
             return True
+        assert isinstance(self.parentnode, Node)
         return self.parentnode._no_match_prev(self.gamestate)
 
+def solve(args):
+    """ Main work function."""
+    # pylint: disable=C0103
+    best_initialization = 10000
+    best_initialization_solution = None
+    for beaker2_initval in range(args.bucket_2_test_start_range_low, \
+        args.bucket_2_test_start_range_high+1):
+        gs = GameState(args.bucket_1_size, 0, args.bucket_2_size, beaker2_initval)
+        print(f"\n *** For beaker starting value {beaker2_initval} {gs} ***")
+
+        # Make a node map and then grow it.
+        root_node = Node(gs)
+        root_node.grow(args.goal)
+
+        goal_results_list = []
+        root_node.print_terminating_threads(goal_results = goal_results_list)
+
+        print(f"{len(goal_results_list)} unique solutions found.")
+
+        best_result_level = 10000
+        best_result_string_list = ["No Goal found",]
+        for results in goal_results_list:
+            if results[0] < best_result_level:
+                best_result_level = results[0]
+                best_result_string_list = [results[1], ]
+            elif results[0] == best_result_level:
+                best_result_string_list.append(results[1])
+
+        if not len(best_result_string_list):
+            print("No GOAL solutions found!")
+        else:
+            add_s = 's'
+            was_were = "were"
+            if len(best_result_string_list) == 1:
+                add_s = ''
+                was_were = "was"
+            print(f"{len(best_result_string_list)} best solution{add_s} requiring only "
+                f"{best_result_level} actions {was_were} found:")
+            for best_result in best_result_string_list:
+                print(f"\t{best_result}")
+            if best_result_level < best_initialization:
+                best_initialization_solution = f"Initializing beaker 2 to {beaker2_initval} " + \
+                    f"is the best solution and requires only {best_result_level} actions to " + \
+                    f"achieve the goal of {args.goal}."
+                best_initialization = best_result_level
+            elif best_result_level == best_initialization:
+                best_initialization_solution = best_initialization_solution[:25] + \
+                    f"{beaker2_initval} or " + best_initialization_solution[25:]
+
+    print(f"\n*** {best_initialization_solution} ***")
+
 # Main code
-if False:
-    the_goal = 3
-    beaker1_size = 4
-    beaker2_size = 1
-    rng = range(0, 1)
-else:
-    the_goal = 12
-    beaker1_size = 18
-    beaker2_size = 15
-    rng = range(8, 12)
+parser = argparse.ArgumentParser()
+parser.add_argument("bucket_1_size", type=int)
+parser.add_argument("bucket_2_size", type=int)
+parser.add_argument("goal", type=int)
+parser.add_argument("bucket_2_test_start_range_low", type=int)
+parser.add_argument("bucket_2_test_start_range_high", type=int)
+my_args = parser.parse_args()
 
-best_initialization = 10000
-best_initialization_solution = None
-for beaker2_initval in rng:
-    gs = GameState(beaker1_size, 0, beaker2_size, beaker2_initval)
-    print(f"\n *** For beaker starting value {beaker2_initval} {gs} ***")
-
-    # Make a node map and then grow it.
-    root_node = Node(gs)
-    root_node.grow(the_goal)
-
-    goal_results_list = []
-    root_node.print_terminating_threads(goal_results = goal_results_list)
-
-    print(f"{len(goal_results_list)} unique solutions found.")
-
-    best_result_level = 10000
-    best_result_string_list = ["No Goal found",]
-    for results in goal_results_list:
-        if results[0] < best_result_level:
-            best_result_level = results[0]
-            best_result_string_list = [results[1], ]
-        elif results[0] == best_result_level:
-            best_result_string_list.append(results[1])
-
-    if not len(best_result_string_list):
-        "No GOAL solutions found!"
-    else:
-        add_s = 's'
-        was_were = "were"
-        if len(best_result_string_list) == 1:
-            add_s = ''
-            was_were = "was"
-        print(f"{len(best_result_string_list)} best solution{add_s} requiring only "
-            f"{best_result_level} actions {was_were} found:")
-        for best_result in best_result_string_list:
-            print(f"\t{best_result}")
-        if best_result_level < best_initialization:
-            best_initialization_solution = f"Initializing beaker 2 to {beaker2_initval} is " + \
-                f"the best solution and requires only {best_result_level} actions to achieve " + \
-                f"the goal of {the_goal}."
-            best_initialization = best_result_level
-        elif best_result_level == best_initialization:
-            best_initialization_solution = best_initialization_solution[:25] + f"{beaker2_initval} \
-                or " + best_initialization_solution[25:]
-
-print(f"\n*** {best_initialization_solution} ***")
+solve(my_args)
