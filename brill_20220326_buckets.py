@@ -169,7 +169,7 @@ class Node:
             if self.gamestate.beaker[0] == g_state.beaker[0] and \
                 self.gamestate.beaker[1] == g_state.beaker[1]:
                 return False
-            if self.parentnode is not None and isinstance(self.parentnode, Node):
+            if self.parentnode is not None:
                 return self.parentnode._no_match_prev(g_state)
             return True
         else:
@@ -181,7 +181,6 @@ class Node:
         """ See if a new node.gamestate matches one its ancestors."""
         if self.parentnode is None:
             return True
-        assert isinstance(self.parentnode, Node)
         return self.parentnode._no_match_prev(self.gamestate)
 
 def solve(args):
@@ -215,8 +214,8 @@ def solve(args):
         if not len(best_result_string_list):
             print("No GOAL solutions found!")
         else:
-            add_s = 's'
-            was_were = "were"
+            add_s = 's' # For nice English
+            was_were = "were" #For nice English
             if len(best_result_string_list) == 1:
                 add_s = ''
                 was_were = "was"
