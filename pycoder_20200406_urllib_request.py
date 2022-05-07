@@ -2,6 +2,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import urlopen, Request
 from pprint import pprint
 import certifi
+import ssl
 
 url = "https://www.example.com"
 with urlopen(url) as response:
@@ -63,4 +64,8 @@ print(body, request)
 
 url = "https://superfish.badssl.com/"
 print(f"Ok let's access a bad certificate url: {url}")
+make_request(url, header)
+
+certifi_context = ssl.create_default_context(cafile=certifi.where())
+header.append("context": certifi_context)
 make_request(url, header)
